@@ -1,17 +1,44 @@
 import axios from 'axios';
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 
 const Auth = ({ mode }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-  
+    const [loading, setLoading] = useState(false)
 
+    const {login, isLoggedIn} = useAuth()
 
-  
+    const navigate = useNavigate()
 
-    const handleSubmit = ({mode}) => {
-        
+    const isLogin = mode === "login"
+
+    const handleSubmit = async(e) => {
+        e.preventDefault()
+
+        setLoading(true)
+        const endPoint = isLogin ? "http://localhost:3000/api/login"
+         : "http://localhost:3000/api/register"
+
+        try{
+            const response = await axios.post(endPoint, {email, password})
+            const data = response.data
+            //localStorage.setItem("token", data.token)
+            login(data.token, data.email || data.user.email)
+            alert(`${isLogin ? "Login" : "Register"} successful!`)
+            navigate("/")
+        }catch(error){
+            if(error.response){
+                alert(error.response.data.message || "something went wrong")
+            }else{
+                alert("server not connecting")
+            }
+        }finally{
+            setLoading(false)
+        }
+
     }
         
     return (
@@ -49,9 +76,11 @@ const Auth = ({ mode }) => {
 
                     <button
                         type="submit"
+                        disabled={loading}
                         className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
                     >
-                      
+                        {loading ? "Please wait.." : isLogin ? "Login" : "Register"}
+            
                     </button>
                 </form>
             </div>
